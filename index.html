@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>番茄木须</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link rel="stylesheet" href="css/mui.min.css">
+		<link rel="stylesheet" href="css/icons-extra.css">
+		<style>
+			html,
+			body {
+				font-size: 62.5%;
+				font-family: "微软雅黑";
+				background-color: #efeff4;
+			}
+			
+			#isShow {
+				display: block;
+			}
+		</style>
+	</head>
+
+	<body id="isShow">
+		<header class="mui-bar mui-bar-nav">
+			<h1 id="title" class="mui-title">番茄木须</h1>
+		</header>
+
+		<nav class="mui-bar mui-bar-tab" id="tabList">
+			<a id="defaultTab" class="mui-tab-item mui-active" href="myTomato.html">
+				<span class="mui-icon mui-icon-extra  mui-icon-extra-outline"></span>
+				<span class="mui-tab-label">首页</span>
+			</a>
+			<a class="mui-tab-item" href="myData.html">
+				<!--<span class="mui-badge">9</span>-->
+				<span class="mui-icon mui-icon-extra mui-icon-extra-trend"></span>
+				<span class="mui-tab-label">数据分析</span>
+			</a>
+			<a class="mui-tab-item" href="myCenter.html">
+				<span class="mui-icon mui-icon-contact"></span>
+				<span class="mui-tab-label">个人中心</span>
+			</a>
+		</nav>
+		<script src="js/mui.min.js"></script>
+		<script type="text/javascript" src="js/index.js"></script>
+		<script>
+			var height = document.documentElement.clientHeight || document.body.clientHeight;
+			window.onresize = function() {
+				var heightView = document.documentElement.clientHeight || document.body.clientHeight;
+				if(heightView < height) {
+					plus.webview.currentWebview().setStyle({
+						height: height
+					});
+					//修改父页面高度的时候，也要修改子页面的高度  因为子页面距离父页面底部始终是51px  所以这里只需要用父页面的高度减去51px,就是子页面的高度
+//					plus.webview.getWebviewById('myTomato.html').setStyle({
+//						height: (height * 1 - 51)
+//					});
+				}
+			}
+		</script>
+	</body>
+
+</html>

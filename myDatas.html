@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>用户信息</title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			html {
+				font-size: 62.5%;
+			}
+			
+			.mui-content {
+				margin-top: 15px;
+				position: relative;
+			}
+			
+			.mui-table-view .mui-active {
+				background-color: #FFFFFF;
+			}
+			
+			#dayData {
+				min-height: 25rem;
+				/*height: 10rem;*/
+			}
+			
+			#prves {
+				position: absolute;
+				top: 6rem;
+				left: 10rem;
+				z-index: 99;
+			}
+			
+			#nexts {
+				position: absolute;
+				top: 6rem;
+				right: 10rem;
+				z-index: 99;
+			}
+			
+			#weekData {
+				min-height: 25rem;
+			}
+			
+			.datsd {
+				text-align: center;
+			}
+			
+			#slider {
+				background: #fff;
+				border-bottom: 2px #eee solid;
+			}
+			
+			#slider1 {
+				background: #fff;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 id="title" class="mui-title">数据图表</h1>
+		</header>
+		<div class="mui-content" id="tabbar-with-map mui-active">
+
+			<!--<button id="prves" type="button" class="mui-btn mui-btn-success mui-btn-outlined">前一天</button>-->
+
+			<div id="slider" class="mui-slider">
+				<div class="mui-slider-group mui-slider-loop">
+					<!-- 额外增加的一个节点(循环轮播：第一个节点是最后一张轮播) -->
+					<div class="mui-slider-item mui-slider-item-duplicate">
+						<a href="#">
+							<div id="dayData"></div>
+						</a>
+						<p id="timesp" style="text-align: center;"></p>
+					</div>
+				</div>
+			</div>
+
+			<div id="slider1" class="mui-slider gdcs">
+				<div class="mui-slider-group">
+					<!-- 额外增加的一个节点(循环轮播：第一个节点是最后一张轮播) -->
+					<div class="mui-slider-item">
+						<a href="#">
+							<div id="weekData"></div>
+						</a>
+						<p id="timesf" style="text-align: center;"></p>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/mui.min.js"></script>
+		<script type="text/javascript" src="js/echarts.js"></script>
+		<script type="text/javascript" src="js/vue.js"></script>
+		<script type="text/javascript" src="js/websql.js"></script>
+		<script type="text/jscript" src="js/customer.js"></script>
+		<script>
+			var sql = initData();
+			var endTime = new Date().Format("yyyy-MM-dd");
+			mui.plusReady(function() {
+				var self = plus.webview.currentWebview();
+				var startTime = new Date();
+				switch(self.whichDay) {
+					case "today":
+						startTime = startTime.Format("yyyy-MM-dd");
+						break;
+					case "week":
+						startTime.setDate((startTime.getDate() - (startTime.getDay() - 1)));
+						startTime = startTime.Format("yyyy-MM-dd");
+						break;
+					case "month":
+						startTime = startTime.getFullYear() + "-" + checkTime(startTime.getMonth() + 1) + "-01";
+						break;
+					case "year":
+						startTime = startTime.getFullYear() + "-01-01";
+						break;
+					default:
+						startTime = startTime.Format("yyyy-MM-dd");
+						break;
+				}
+				modeDetailDataFn(self.dataId,startTime, endTime);
+				modeDataFn(startTime, endTime);
+			})
+			//一天的数据列表
+			function modeDetailDataFn(modeId,startTime, endTime) {
+				sql.stasticDataByModeId(modeId,startTime, endTime, function(result) {
+					var len = result.length;
+					var legend = [];
+					var dataList = [];
+					if(len==0){
+						dataList.push({
+							value:0,
+							name: "无匹配数据"
+						});
+						legend=["无匹配数据"]
+					}
+					for(var i = 0; i < len; i++) {
+						legend.push(result[i].taskName)
+						dataList.push({
+							value: (result[i].keepTime),
+							name: result[i].taskName
+						});
+					}
+
+					mydayChart = echarts.init(document.getElementById("dayData"));
+					dayOption = {
+						tooltip: {
+							trigger: 'item',
+							formatter: "时长 <br/>{b} : {c}分钟 ({d}%)"
+						},
+						grid:{
+							
+						},
+						legend: {
+							data: legend
+						},
+						series: [{
+							type: 'pie',
+							radius: '65%',
+							center: ['50%', '50%'],
+							selectedMode: 'single',
+							data: dataList,
+							itemStyle: {
+								emphasis: {
+									shadowBlur: 10,
+									shadowOffsetX: 0,
+									shadowColor: 'rgba(0, 0, 0, 0.5)'
+								}
+							}
+						}]
+					};
+					//dayOption.series[0].data = arrs;
+					mydayChart.setOption(dayOption);
+
+				});
+
+			}
+
+			function modeDataFn(startTime, endTime) {
+
+				var showChartList = [];
+				sql.stasticWeekDataByDay(startTime, endTime, function(result) {
+
+					var lengend = [];
+					var yData=[];
+					for(var i = 0; i < result.length; i++) {
+						var dataList = [];
+						lengend.push(result[i].name);//图表标题
+						for(var j = 0; j < result[i].data.length; j++) {
+							dataList.push(result[i].data[j].total);
+							if(i==0){
+								yData.push(result[i].data[j].createtime);
+							}							
+						}
+						showChartList.push({
+							name: result[i].name,
+							type: 'bar',
+							stack: '总量',
+							label: {
+								normal: {
+									show: true,
+									position: 'insideRight'
+								}
+							},
+							data: dataList
+						});
+					}
+
+					var myweekChart = echarts.init(document.getElementById('weekData'));
+					option = {
+						tooltip: {
+							trigger: 'axis',
+//							formatter: "时长 <br/>{b} : {c}分钟 ({d}%)",
+							axisPointer: { // 坐标轴指示器，坐标轴触发有效
+								type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+							}
+						},
+						legend: {
+							data: lengend,
+							top:'5%'
+						},
+						grid: {
+							left: '3%',
+							right: '4%',
+							bottom: '3%',
+							containLabel: true
+						},
+						xAxis: {
+							type: 'value'
+						},
+						yAxis: {
+							type: 'category',
+							data: yData
+						},
+						series: showChartList
+					};
+					myweekChart.setOption(option);
+				});
+
+			}
+		</script>
+	</body>
+
+</html>

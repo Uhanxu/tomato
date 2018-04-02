@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>用户信息</title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			html {
+				font-size: 62.5%;
+			}
+			
+			.mui-content {
+				margin-top: 10px;
+				position: relative;
+			}
+			
+			.mui-table-view .mui-active {
+				background-color: #FFFFFF;
+			}
+			
+			.mui-table-view-cell.mui-collapse .mui-table-view {
+				margin-top: 0;
+			}
+			
+			.navC {
+				height: 42px;
+				width: 100%;
+				border-top: 1px solid #CCCCCC;
+				background: #fff;
+			}
+			
+			.navC span {
+				display: inline-block;
+				font-size: 16px;
+				width: 33.3333333333333333%;
+				line-height: 40px;
+				float: left;
+				text-align: center;
+			}
+			
+			.active {
+				color: #FFFFFF;
+				/*background: #1BAFA1;*/
+				background-color: #00bcd4;
+			}
+			
+			.mui-card {
+				margin: 1px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content" id="dataList" v-cloak="">
+			<div class="navC">
+				<span v-bind:class="{active: btnItem.isActive }" v-for="(btnItem,index) in BtnList" :id="btnItem.id" v-on:click="switchTab">{{btnItem.name}}</span>
+			</div>
+			<div class="mui-card">
+				<ul class="mui-table-view">
+					<li class="mui-table-view-cell mui-collapse" v-bind:class="{'mui-active': (index==0) }" v-for="(item,index) in TypeList">
+						<a class="mui-navigate-right" href="#"><label>{{item.name}}</label> <label style="padding-left:5%;">{{item.time}}</label></a>
+						<div class="mui-collapse-content">
+							<ul class="mui-table-view">
+								<li class="mui-table-view-cell" v-for="(dItem,index) in item.data">
+									<a href="javascript:"><label>{{dItem.taskName}}</label> <label style="padding-left:5%;">累计：{{dItem.mark}}</label><label style="padding-left:5%;">{{dItem.orderTime}}</label></a>
+								</li>
+								<li class="mui-table-view-cell  mui-table-view-chevron" :id="item.id" v-on:click="moreInfo">
+									<a href="javascript:" class="mui-navigate-right">更多统计信息</a>
+								</li>
+							</ul>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/mui.min.js"></script>
+		<script type="text/javascript" src="js/vue.js"></script>
+		<script type="text/javascript" src="js/websql.js"></script>
+		<script type="text/jscript" src="js/customer.js"></script>
+		<script>
+			var endTime = new Date().Format("yyyy-MM-dd");
+			var sql = initData();
+			var btnList = [{
+					id: "today",
+					name: "今天",
+					isActive: true
+				}, {
+					id: "week",
+					name: "本周",
+					isActive: false
+				}, {
+					id: "month",
+					name: "本月",
+					isActive: false
+				}
+				//			, {
+				//				id: "year",
+				//				name: "本年",
+				//				isActive: false
+				//			}
+			];
+			window.addEventListener("send", function(e) {
+				if(!localStorage.getItem("flag")) {
+					location.reload();
+				}
+
+			})
+			selectData(endTime, endTime, function(result) {
+				//				console.log(JSON.stringify(result));
+				if(result != null) {
+					localStorage.setItem("flag", true);
+				}
+				var bindData = new Vue({
+					el: "#dataList",
+					data: {
+						TypeList: result,
+						BtnList: btnList,
+						WhichDay: "today"
+					},
+					methods: {
+						switchTab: function(event) { //顶部菜单切换
+							var currentId = event.currentTarget.id;
+							var self = this;
+							for(var i = 0; i < self.BtnList.length; i++) {
+								if(self.BtnList[i].id == currentId) {
+									self.BtnList[i].isActive = true;
+								} else {
+									self.BtnList[i].isActive = false;
+								}
+							}
+							var startTime = new Date();
+							switch(currentId) {
+								case "today":
+									startTime = startTime.Format("yyyy-MM-dd");
+									break;
+								case "week":
+									startTime.setDate((startTime.getDate() - (startTime.getDay() - 1)));
+									startTime = startTime.Format("yyyy-MM-dd");
+									self.WhichDay = "week";
+									break;
+								case "month":
+									startTime = startTime.getFullYear() + "-" + checkTime(startTime.getMonth() + 1) + "-01";
+									self.WhichDay = "month";
+									break;
+								case "year":
+									startTime = startTime.getFullYear() + "-01-01";
+									self.WhichDay = "year";
+									break;
+								default:
+									startTime = startTime.Format("yyyy-MM-dd");
+									break;
+							}
+							selectData(startTime, endTime, function(result) {
+								self.TypeList = result;
+							})
+						},
+						moreInfo: function(event) { //查看更多信息
+							var dataId = event.currentTarget.id;
+							var self = this;
+							mui.openWindow({
+								id: "myDatas",
+								url: "myDatas.html",
+								extras: {
+									dataId: dataId,
+									whichDay: self.WhichDay
+								}
+							})
+						}
+					}
+				})
+			})
+
+			function selectData(startTime, endTime, callback) {
+				sql.stasticDataByDay(startTime, endTime, function(result) {
+					//					console.log(JSON.stringify(result));
+					callback(result);
+				})
+			}
+		</script>
+	</body>
+
+</html>

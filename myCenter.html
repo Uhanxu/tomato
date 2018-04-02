@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>用户信息</title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			html {
+				font-size: 62.5%;
+			}
+			
+			.mui-content {
+				margin-top: -5px;
+			}
+			
+			#userInfo {
+				background-color: #FFFFFF;
+				height: 10rem;
+				padding: 1rem 1.5rem;
+			}
+			
+			.mui-table-view .mui-media-object {
+				width: 80px;
+				max-width: 80px;
+				height: 80px;
+			}
+			
+			.mui-ellipsis {
+				padding: 14px 0;
+				height: 3.5rem;
+				color: #000000;
+				font-size: 1.6rem;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content" id="userAreas">
+			<ul class="mui-table-view mui-table-view-chevron" >
+				<li class="mui-table-view-cell mui-media" id="userInfo" v-if="isLogin" v-on:click="infoPage">
+					<a class="mui-navigate-right" href="#account">
+						<img class="mui-media-object mui-pull-left head-img" id="head-img" v-bind:src=imgHead>
+						<div class="mui-media-body">
+							<p class='mui-ellipsis'>昵称：{{nickName}} <label style="color: #ccb01d;font-size: 20px;font-weight: bold;display: none;">VIP 1</label></p>
+							<p class='mui-ellipsis'>地址：<label id="accountNum">{{account}}</label></p>
+						</div>
+					</a>
+				</li>
+				<li class="mui-table-view-cell mui-media" id="userInfo" v-on:click="loginPage" v-else>
+					<a class="mui-navigate-right" href="#account">
+						<img class="mui-media-object mui-pull-left head-img" id="head-img" src="image/80x80.png">
+						<div class="mui-media-body">
+							<p class='mui-ellipsis'>未登录</p>
+							<!--<p class='mui-ellipsis'>账号:<label id="accountNum">{{account}}</label></p>-->
+						</div>
+					</a>
+				</li>
+			</ul>
+			<ul class="mui-table-view mui-table-view-chevron" style="margin-top: 15px;" v-on:click="bgMusic">
+				<li class="mui-table-view-cell" id="bgMusic" v-on:click="bgMusic">
+					<a href="javascript:" class="mui-navigate-right">背景音乐</a>
+				</li>
+			</ul>
+
+			<ul class="mui-table-view" style="display: none;margin-bottom: 15px;margin-top: 15px;" v-on:click="setting">
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right">
+						设置
+					</a>
+				</li>
+			</ul>
+			<ul class="mui-table-view mui-table-view-chevron" style="margin-bottom: 15px;margin-top: 15px;" v-on:click="aboutUs">
+				<li class="mui-table-view-cell" id="aboutUs">
+					<a href="javascript:" class="mui-navigate-right">关于番茄木须 <i class="mui-pull-right update"></i></a>
+				</li>
+			</ul>
+			<ul class="mui-table-view mui-table-view-chevron" style="margin-bottom: 15px;" v-on:click="adviceMsg">
+				<li class="mui-table-view-cell" id="adviceMsg">
+					<a href="javascript:" class="mui-navigate-right">意见和建议</a>
+				</li>
+			</ul>
+
+			<ul class="mui-table-view" style="margin-bottom: 15px;" v-on:click="loginOut">
+				<li class="mui-table-view-cell" style="text-align: center;" id="loginOut">
+					<a class="">
+						退出登录
+					</a>
+				</li>
+			</ul>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/customer.js"></script>
+		<script src="js/vue.js"></script>
+		<script>
+			mui.plusReady(function() {
+				var data = {
+					nickName: "",
+					account: "",
+					isLogin: false
+				};
+
+				window.addEventListener("login", function(e) {
+					if(e.detail.id) {
+						location.reload();
+					}
+				})
+				if(localStorage.getItem("wxUser") != {}) {
+					var localInfo = JSON.parse(localStorage.getItem("wxUser"));
+					if(localInfo !== null) {
+						data = {
+							nickName: localInfo.nickname,
+							account: localInfo.province + localInfo.city,
+							isLogin: true,
+							imgHead: localInfo.headimgurl
+						}
+					};
+				}
+
+				//"{\"openid\":\"oRrdQtwqR8As4ZUTF6pjPMa8_FyY\",\"nickname\":\"邯许\",
+				//		\"sex\":1,\"language\":\"zh_CN\",\"city\":\"邯郸\",\"province\":\"河北\",
+				//		\"country\":\"中国\",\"headimgurl\":\"http://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTIE4LicTogEgUZaXBJg0OBWhVzLdS40oSFXicsvYII8mb4ibvZpWnvUNZTlJhfbuPpvkzEQKTxb8Zdpw/132\",
+				//		\"privilege\":[],\"unionid\":\"oU5YytzQqx9HACsNY5WlQG6yxni8\"}"
+
+				var funList = new Vue({
+					el: '#userAreas',
+					data: data,
+					methods: {
+						loginPage: function(event) {
+							event.stopPropagation();
+							mui.openWindow({
+								id: "login",
+								url: "login" + ".html"
+							})
+						},
+						infoPage: function() {
+							mui.openWindow({
+								id: "userInfo",
+								url: "userInfo" + ".html"
+							})
+						},
+						bgMusic: function(event) {
+							mui.openWindow({
+								id: "bgMusic",
+								url: "bgMusic" + ".html"
+							})
+						},
+						setting: function() {
+							mui.openWindow({
+								id: "setting",
+								url: "setting" + ".html"
+							})
+						},
+						aboutUs: function() {
+							mui.openWindow({
+								id: "aboutTomato",
+								url: "aboutTomato" + ".html"
+							})
+						},
+						adviceMsg: function() {
+							mui.openWindow({
+								id: "adviceMsg",
+								url: "adviceMsg" + ".html"
+							})
+						},
+						loginOut: function() {
+							closeApp();
+						}
+					}
+				});
+
+				function closeApp() {
+					var btns = [{
+						title: "注销当前账号"
+					}, {
+						title: "直接关闭应用"
+					}];
+					if(plus.os.name == "iOS") {
+						btns = [{
+							title: "注销当前账号"
+						}];
+					}
+					plus.nativeUI.actionSheet({
+						cancel: "取消",
+						buttons: btns
+					}, function(e) {
+						var index = e.index;
+						switch(index) {
+							case 1:
+								var wx = initLoginMode(function(initResult) {
+									if(initResult) {
+										wx.loginout(function(res) {
+											if(res) {
+												plus.runtime.restart();
+											}
+										})
+									}
+								});
+								break;
+							case 2:
+								plus.runtime.quit();
+								break;
+						}
+					});
+				};
+			})
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>用户信息</title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			html {
+				font-size: 62.5%;
+				font-family: "微软雅黑";
+			}
+			
+			.mui-content {
+				margin-top: 15px;
+			}
+			
+			.mui-inline {
+				padding: 2% 2%;
+			}
+			
+			.mui-input-row {
+				padding: 0 1%;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 id="title" class="mui-title">反馈</h1>
+			<a class="mui-icon mui-icon-right-nav mui-icon-paperplane mui-pull-right" id="sendMsg" style="font-size: 2.8rem;"></a>
+		</header>
+		<div class="mui-content">
+
+			<div class="mui-inline">问题和建议</div>
+			<div class="row mui-input-row">
+				<textarea id='question' rows="5" class="mui-input-clear question" placeholder="请详细描述你的问题和意见..."></textarea>
+			</div>
+
+			<div class="mui-inline">邮箱</div>
+			<div class="mui-input-row">
+				<input id='contact' type="text" class="mui-input-clear contact" placeholder="选填,方便我们联系您" />
+			</div>
+
+			<div class="mui-inline">应用评分</div>
+			<div class="mui-input-row" style="padding: 2% 1%;background-color:#FFFFFF;">
+				<i data-index="1" class="mui-icon mui-icon-star"></i>
+				<i data-index="2" class="mui-icon mui-icon-star"></i>
+				<i data-index="3" class="mui-icon mui-icon-star"></i>
+				<i data-index="4" class="mui-icon mui-icon-star"></i>
+				<i data-index="5" class="mui-icon mui-icon-star"></i>
+			</div>
+		</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/jquery.js"></script>
+		<script>
+			document.getElementById("sendMsg").addEventListener("tap", function() {
+				setTimeout(function() {
+					mui.alert("感谢您的反馈，我们会根据问题及时联系您！", "提示");
+				}, 2000)
+
+			});
+			mui('.mui-input-row').on('tap', 'i', function() {
+				var index = parseInt(this.getAttribute("data-index"));
+				var parent = this.parentNode;
+				var children = parent.children;
+				if(this.classList.contains("mui-icon-star")) {
+					for(var i = 0; i < index; i++) {
+						children[i].classList.remove('mui-icon-star');
+						children[i].classList.add('mui-icon-star-filled');
+					}
+				} else {
+					for(var i = index; i < 5; i++) {
+						children[i].classList.add('mui-icon-star')
+						children[i].classList.remove('mui-icon-star-filled')
+					}
+				}
+				starIndex = index;
+			});
+		</script>
+	</body>
+
+</html>

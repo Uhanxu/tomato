@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>番茄钟</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			html {
+				font-size: 62.5%;
+				font-family: "微软雅黑";
+			}
+			
+			.mui-content {
+				margin-top: -5px;
+			}
+			
+			.imageBox {
+				position: absolute;
+				right: 10px;
+				top: 2px;
+				z-index: 2;
+				background-color: #1bafa1;
+				border-radius: 50%;
+			}
+			
+			.mui-icon-plusempty {
+				color: #FFFFFF;
+				font-size: 3.8rem !important;
+			}
+			
+			.mui-input-group {
+				width: 100%;
+				height: 300px;
+				padding: 10% 5%;
+			}
+			
+			.mui-popover .mui-popover-arrow:after {
+				background: #FFFFFF;
+			}
+			
+			.mui-popover .mui-scroll-wrapper {
+				margin: 0;
+			}
+			
+			.mui-popover {
+				height: 300px;
+			}
+			
+			.mui-btn {
+				width: 50%;
+			}
+			
+			.mui-button-row .mui-btn-block {
+				float: left;
+				width: 46%;
+				line-height: 1.4rem;
+			}
+			
+			.mui-btn-done {
+				box-sizing: border-box;
+				margin: 10% 0 2% 0%;
+				background-color: #00BCD4;
+				color: white;
+				border: 1px solid #00BCD4;
+			}
+			
+			.mui-btn-todo {
+				box-sizing: border-box;
+				margin: 10% 0 2% 4%;
+				background-color: #f1f1f1;
+				color: black;
+				border: 1px solid #f1f1f1;
+			}
+			
+			#middlePopover {
+				width: 300px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="imageBox" id="addTomato">
+			<a class="mui-icon mui-icon-plusempty" href="#middlePopover"></a>
+		</div>
+		<div id="middlePopover" class="mui-popover">
+			<div class="mui-popover-arrow" id="angle"></div>
+			<div class="mui-scroll-wrapper">
+				<div class="mui-scroll">
+					<form class="mui-input-group">
+						<div class="mui-input-row">
+							<label style="width: 30%;">名称:</label>
+							<input type="text" id="typeName" class="mui-input-clear" placeholder="阅读" style="width: 70%;">
+						</div>
+						<div class="mui-input-row mui-radio mui-left">
+							<label>番茄钟</label>
+							<input name="radio1" value="番茄钟" type="radio" checked="checked">
+						</div>
+						<div class="mui-input-row mui-radio mui-left">
+							<label>倒计时</label>
+							<input name="radio1" value="倒计时" type="radio">
+						</div>
+						<div class="mui-input-row mui-radio mui-left">
+							<label>时间累计</label>
+							<input name="radio1" value="时间累计" type="radio">
+						</div>
+						<div class="mui-button-row">
+							<button class="mui-btn-block mui-btn-todo">取消</button>
+							<button class="mui-btn-block mui-btn-done" id="subData">确定</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<div class="mui-content" id="tabbar-with-map mui-active">
+			<ul id="tomatoList" class="mui-table-view" v-cloak>
+				<li class="mui-table-view-cell" v-on:click="startTask" :name="item.clockType" v-for="(item, index) in taskList" :id="item.id">
+					<div class="mui-slider-right mui-disabled">
+						<a class="mui-btn mui-btn-warning mui-icon mui-icon-compose"  :id="item.id" v-on:click="editTask"></a>
+						<a class="mui-btn mui-btn-danger mui-icon mui-icon-trash" dname="dddd" :id="item.id" v-on:click="removeTask"></a>
+					</div>
+					<div class="mui-slider-handle">
+						<div class="mui-table-cell">
+							{{item.nameType}}
+						</div>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/jquery.js"></script>
+		<script type="text/javascript" src="js/websql.js"></script>
+		<script type="text/javascript" src="js/vue.js"></script>
+		<script>
+			var sql = initData();
+			sql.createTable();
+			var editFlag = false;
+			var dataId = 0;
+			var tomatoList = document.getElementById("tomatoList");
+			//开始某项的番茄钟
+
+			var subData = document.getElementById("subData"); //确认提交数据
+			subData.addEventListener("tap", function(event) {
+				var typeName = document.getElementById("typeName").value;
+				var clockType = document.getElementsByName("radio1");
+				var clockTypeV = "";
+				for(var i = 0, len = clockType.length; i < len; i++) {
+					if(clockType[i].checked) {
+						clockTypeV = clockType[i].value;
+					}
+				}
+				var data = [typeName, clockTypeV];
+				if(editFlag && dataId > 0) {
+					data.insert(2, parseInt(dataId)) //注ID必须为INT
+					sql.updateData("TaskMode", data, function(result) {
+						if(result) {
+							mui.toast("修改成功!")
+						}
+						return;
+					});
+				} else {
+					sql.addData("TaskMode", data, function(result) {
+						mui.toast("添加成功");
+					});
+					editFlag = false;
+				}
+			});
+////
+//						sql.stasticWeekDataByDay("2018-03-21","2018-03-27",function(res){
+//							console.log(JSON.stringify(res))
+//						});
+
+			var localData = [];
+			sql.db.transaction(function(tx) {
+				tx.executeSql('SELECT * FROM TaskMode', [], function(tx, results) {
+					var len = results.rows.length;
+					for(var i = 0; i < len; i++) {
+						var currentStatus = false;
+						localData.push({
+							id: results.rows.item(i).id,
+							nameType: results.rows.item(i).nameType,
+							clockType: results.rows.item(i).clockType
+						});
+					}
+					var tomatoList = new Vue({
+						el: '#tomatoList',
+						data: {
+							taskList: localData
+						},
+						//						mounted:
+						methods: {
+							startTask: function(event) {
+								var id = event.currentTarget.id;
+								var pageId = "";
+								var longTime = 25;
+								var name = event.currentTarget.getAttribute("name");
+								switch(name) {
+									case "番茄钟":
+										pageId = "tomatoTime";
+										break;
+									case "倒计时":
+										pageId = "tomatoTime";
+										longTime = 60;
+										break;
+									case "时间累计":
+										pageId = "accumulateTime";
+										break;
+									default:
+										mui.toast("无匹配的计时方式!");
+										break;
+								}
+								if(pageId != null && pageId != "") {
+									mui.openWindow({
+										id: pageId,
+										url: pageId + ".html",
+										extras: {
+											typeId: id,
+											longTime: longTime
+										}
+									})
+								}
+							},
+							editTask: function(event) {
+								event.stopPropagation();
+								var id = event.currentTarget.id;
+								sql.db.transaction(function(tx) {
+									tx.executeSql('SELECT * FROM TaskMode WHERE id =' + id, [], function(tx, results) {
+										var len = results.rows.length;
+										document.getElementById("typeName").value = results.rows.item(0).nameType;
+										var clockType = document.getElementsByName("radio1");
+										for(var i = 0, len = clockType.length; i < len; i++) {
+											if(clockType[i].value == results.rows.item(0).clockType) {
+												clockType[i].checked = true;
+											}
+										}
+										editFlag = true;
+										dataId = id;
+
+										//计算弹窗的位置
+										var width = window.screen.width;
+										var porperWidth = document.getElementById("middlePopover").offsetWidth;
+										var height = window.screen.height;;
+										document.getElementById("middlePopover").style.left = (width - 300) / 2 + "px";
+										document.getElementById("middlePopover").style.top = (height - 400) / 2 + "px";
+										document.getElementById("angle").style.display = "none";
+										mui("#middlePopover").popover("toggle");
+									})
+								})
+							},
+							removeTask: function(event) {
+								var id = event.currentTarget.id;
+								var btnArray = ['确定', '取消'];
+								event.stopPropagation();
+								mui.confirm('是否删除该项', '提示', btnArray, function(e) {
+									if(e.index == 0) {
+										id = parseInt(id);
+										var result = sql.deleteData("TaskMode", [id],function(delRes){
+											if(delRes){
+												location.reload();
+											}												
+										});									
+									}
+								})
+							}
+						}
+					})
+				})
+			});
+
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>番茄木须</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link rel="stylesheet" href="css/mui.min.css">
+		<link rel="stylesheet" href="css/icons-extra.css">
+		<style>
+			html,
+			body {
+				font-size: 62.5%;
+				font-family: "微软雅黑";
+				background-color: #efeff4;
+				height: calc(100% - 44px)
+			}
+			
+			.nav {
+				height: 42px;
+				width: 100%;
+				margin-top: 44px;
+				border-top: 1px solid #CCCCCC;
+				background: #fff;
+			}
+			
+			.nav span {
+				display: inline-block;
+				font-size: 16px;
+				width: 50%;
+				line-height: 40px;
+				float: left;
+				text-align: center;
+			}
+			
+			.local {}
+			
+			.onLine {}
+			
+			.onLinecontentBox,
+			.localcontentBox {
+				/*background: #00BCD4;*/
+				/*width: 100%;
+				height: 100%;*/
+				overflow: scroll;
+			}
+			
+			ul,
+			li {
+				padding: 0;
+				margin: 0;
+			}
+			/*.li {
+				font-size: 14px;
+			}*/
+			/*.li {
+				position: relative;
+			}*/
+			/*.mui-table-view-chevron .mui-table-view-cell {
+				padding-right: 15px;
+			}*/
+			/*.onLiBOx,
+			.addBox {
+				box-sizing: border-box;
+				margin-top: 10px;
+			}*/
+			
+			.active {
+				color: #FFFFFF;
+				/*background: #1BAFA1;*/
+				background-color: #00bcd4;
+			}
+			
+			#localDiv {
+				font-size: 1.4rem;
+			}
+			
+			.mui-table-cell {
+				display: inline;
+			}
+			
+			.muName {
+				float: left;
+				line-height: 25px;
+			}
+			
+			.seting {
+				display: block;
+				float: right;
+				width: 100px;
+				text-align: center;
+				float: right;
+				border: 1px solid #00BCD4;
+				border-radius: 10px;
+				height: 30px;
+				line-height: 30px;
+				color: #00BCD4;
+			}
+			
+			.showCh {
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 id="title" class="mui-title">背景音乐</h1>
+		</header>
+		<div id="localDiv" v-cloak>
+			<div class="nav">
+				<span class="local active" id="local" v-on:click="localData">本地</span>
+				<span class="onLine" id="online" v-on:click="onlineData">线上</span>
+			</div>
+			<audio class="audios" id="playArea"></audio>
+			<div id="toggleDiv">
+				<ul class="mui-table-view" v-if="isHidden">
+					<li class="mui-table-view-cell" v-for="(item, index) in localList" :muSrc="item.src" :id="item.id" v-on:click="playMusic">
+						<div class="mui-slider-right mui-disabled">
+							<a class="mui-btn mui-btn-danger mui-icon mui-icon-trash" :localsrc="item.name" :id="item.id" v-on:click="removeMusic"></a>
+						</div>
+						<div class="mui-slider-handle">
+							<div class="mui-table-cell">
+								<div class="muName">{{item.name}}</div>
+								<span class="seting" :localsrc="item.src" v-on:click="setBgMusic">{{item.status}}</span>
+							</div>
+						</div>
+					</li>
+				</ul>
+				<ul class="mui-table-view" v-else>
+					<li class="mui-table-view-cell" v-for="(item, index) in onlineList" :id="item.id" :muSrc="item.src" v-on:click="playMusic">
+						<div class="mui-slider-handle">
+							<div class="mui-table-cell">
+								<div class="muName">{{item.name}}</div>
+								<span class="seting" :datasrc="item.src" :id="item.id" v-on:click="fileDowload">{{item.status}}</span>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/jquery.js"></script>
+		<script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+		<script>
+			mui.plusReady(function() {
+				var localSrc = "";
+				var whichMusic = (typeof localStorage.getItem("bgMusic") === "string");
+				if(whichMusic) {
+					localSrc = localStorage.getItem("bgMusic");
+				}
+				var online = [{
+						id: "1",
+						src: "https://www.soowing.com/api/signin/upload/online/Birdsong.mp3",
+						//									name: "林间鸟鸣",
+						name: "Birdsong",
+						status: "下载"
+					},
+					{
+						id: "2",
+						src: "https://www.soowing.com/api/signin/upload/online/Morning.mp3",
+						//									name: "清晨",
+						name: "Morning",
+						status: "下载"
+					},
+					{
+						id: "3",
+						src: "https://www.soowing.com/api/signin/upload/online/Rain.mp3",
+						//									name: "雨的印记",
+						name: "Rain",
+						status: "下载"
+					},
+					{
+						id: "4",
+						src: "https://www.soowing.com/api/signin/upload/online/Forest.mp3",
+						//									name: "天籁森林",
+						name: "Forest",
+						status: "下载"
+					}
+				];
+				var initLdata = readLocalFiles(function(list, entry) {
+					var localList = list; //本地和线上对比
+					for(var k = 0; k < entry.length; k++) {
+						for(var l = 0; l < online.length; l++) {
+							if(entry[k].name.indexOf(online[l].name) == 0) {
+								online[l].status = "已下载";
+							}
+						}
+					}
+					var musicList = new Vue({
+						el: "#localDiv",
+						data: {
+							isHidden: true,
+							localList: list,
+							onlineList: online
+						},
+						methods: {
+							localData: function(e) {
+								var self = this;
+								document.getElementById("local").classList.add("active");
+								document.getElementById("online").classList.remove("active");
+								self.isHidden = true;
+								readLocalFiles(function(res) {
+									self.localList = res;
+								})
+							},
+							onlineData: function(e) {
+								var self = this;
+								document.getElementById("local").classList.remove("active");
+								document.getElementById("online").classList.add("active");
+								self.isHidden = false;
+								readLocalFiles(function(res) {
+									self.localList = res;
+								})
+							},
+							playMusic: function(e) {
+								
+								var muSrc = event.currentTarget.attributes.muSrc.value;
+								var aud = document.getElementById("playArea");
+								var currentSrc = aud.src;
+								if(currentSrc.indexOf(muSrc) < 0) { //如果选择不是同一个
+									aud.src = muSrc;
+									aud.play();
+								} else { //是同一个
+									if(aud.paused) {
+										aud.play();
+									} else {
+										aud.pause();
+									}
+								}
+							},
+							setBgMusic: function(e) {
+								e.stopPropagation();
+								var obj = event.currentTarget;
+								var bgMus = obj.attributes.localsrc.value;
+								var choseList = document.querySelectorAll(".seting");
+								for(var i = 0; i < choseList.length; i++) {
+									if(choseList[i].innerHTML == "✔") {
+										choseList[i].innerHTML = "设为背景乐";
+									}
+								}
+								obj.innerHTML = "✔";
+								localStorage.setItem('bgMusic', bgMus);
+							},
+							removeMusic: function(event) {
+								event.stopPropagation();
+								var muName = event.currentTarget.attributes.localsrc.value;
+								for(var i = 0; i < entry.length; i++) {
+									if(entry[i].name == muName) {
+										entry[i].remove(function(entry) {
+											location.reload();
+										}, function(e) {
+											mui.toast("删除失败" + e.message);
+										});
+									}
+								}
+							},
+							fileDowload: function(event) {
+								event.stopPropagation();
+								if(event.currentTarget.innerHTML == "已下载") {
+									mui.toast("已下载，无需重复下载！");
+									return;
+								}
+								var dataAttr = event.currentTarget.attributes;
+								var id=event.currentTarget.id;					
+								var dataSrc = dataAttr.datasrc.value;
+
+								var pro = event.currentTarget;
+								var dtask = plus.downloader.createDownload(dataSrc);
+								dtask.addEventListener("statechanged", onStateChanged, false);
+								dtask.start();
+
+								function onStateChanged(download, status) {
+									if(typeof download.url === "string") {
+										var proValue = ((download.downloadedSize / download.totalSize) * 100).toFixed(0);
+										if(parseInt(proValue) > 0) {
+											pro.innerHTML = proValue + "%";
+										}
+										if(download.state == 4 && status == 200) {
+											pro.innerHTML = "已下载";
+											online[id-1].status="已下载";
+										}
+									} else {
+										mui.toast("下载地址无效！");
+									}
+								}
+							}
+						}
+					});
+				})
+
+				function readLocalFiles(callback) {
+					var localList = [];
+					plus.io.requestFileSystem(plus.io.PUBLIC_DOWNLOADS, function(fs) {
+						var directoryReader = fs.root.createReader();
+						directoryReader.readEntries(function(entries) {
+							for(var i = 0; i < entries.length; i++) {
+								if(entries[i].name.split('.')[1] === 'mp3') {
+									localList.push({
+										id: i + 1,
+										src: entries[i].fullPath,
+										name: entries[i].name,
+										status: (localSrc == entries[i].fullPath) ? "✔" : "设为背景乐"
+									})
+								}
+							}
+							callback(localList, entries);
+						}, function(e) {
+							mui.toast("读取本地文件失败: " + e.message);
+						})
+					});
+				}
+			})
+		</script>
+	</body>
+
+</html>

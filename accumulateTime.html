@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>番茄钟</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link rel="stylesheet" href="css/mui.min.css">
+		<style>
+			html {
+				font-size: 62.5%;
+				font-family: "微软雅黑";
+			}
+			
+			html,
+			body {
+				/*background-color: #efeff4;*/
+				background-color: #82d4e0;
+			}
+			
+			.mui-content {
+				margin-top: 10px;
+				background-color: #82d4e0;
+			}
+			
+			#timeCanvas {
+				/*background: linear-gradient(to bottom right, red, blue);*/
+				-webkit-background: linear-gradient(to bottom right, #F44336, #00c1da);
+				background: linear-gradient(to bottom right, #F44336, #00c1da);
+				/*position: absolute;*/
+				width: 300px;
+				height: 300px;
+				border-radius: 20%;
+				margin: 40% auto 0 auto;
+				display: block;
+			}
+			
+			.btn_time {
+				position: absolute;
+				top: 80%;
+				left: 0%;
+				width: 100%;
+			}
+			
+			.btn_time .mui-btn-block {
+				float: left;
+				width: 46%;
+			}
+			
+			.mui-btn-done {
+				box-sizing: border-box;
+				margin: 2% 0 2% 4%;
+				background-color: #00BCD4;
+				color: white;
+				border: 1px solid #00BCD4;
+			}
+			
+			.mui-btn-todo {
+				box-sizing: border-box;
+				margin: 2% 0 2% 0%;
+				background-color: #f1f1f1;
+				color: black;
+				border: 1px solid #f1f1f1;
+			}
+			
+			.imageBox {
+				width: 40px;
+				height: 40px;
+				position: absolute;
+				right: 20px;
+				top: 60px;
+			}
+			
+			.imageBox img {
+				width: 40px;
+				height: 40px;
+			}
+			
+			.elementHidden {
+				-webkit-transform-origin: 0 0 0;
+				-moz-transform-origin: 0 0 0;
+				-ms-transform-origin: 0 0 0;
+				transform-origin: 0 0 0;
+				-webkit-transform: all 0.2s cubic-bezier(0.0, 0.0, 1.0, 1.0), z-index 0s 0.1s;
+				-moz-transform: all 0.2s cubic-bezier(0.0, 0.0, 1.0, 1.0), z-index 0s 0.1s;
+				-ms-transform: all 0.2s cubic-bezier(0.0, 0.0, 1.0, 1.0), z-index 0s 0.1s;
+				transition: all 0.2s cubic-bezier(0.0, 0.0, 1.0, 1.0), z-index 0s 0.1s;
+				display: block;
+				/*z-index: 22*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="elementHidden" id="hiddenEle">
+			<header class="mui-bar mui-bar-nav ">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 id="title" class="mui-title">番茄钟计时</h1>
+			</header>
+			<div class="btn_time">
+				<button class="mui-btn-block mui-btn-done" id="done">完成</button>
+				<button class="mui-btn-block mui-btn-todo" id="pause">暂停</button>
+			</div>
+		</div>
+		<div class="mui-content" id='userList'>
+			<div class="imageBox" bindtap="revamp" id="modify">
+				<img src="image/playMusic.png" class="revamp" id="togglePlay"></image>
+				<audio id="bgMusic" autoplay="autoplay" loop="loop" style="display: none;" src="data/morning.mp3"></audio>
+			</div>
+			<canvas id="timeCanvas" width="300" height="300"></canvas>
+		</div>
+
+		<script src="js/mui.min.js"></script>
+		<script src="js/customer.js" type="text/javascript" charset="utf-8"></script>
+		<script>
+			mui.plusReady(function() {
+				var canvas = document.getElementById("timeCanvas");
+				var obj = accumulateCan(canvas);
+				var audiEle = document.getElementById("bgMusic");
+
+				var whichMusic = (typeof localStorage.getItem("bgMusic") === "string");
+				if(whichMusic) {
+					audiEle.src = localStorage.getItem("bgMusic");
+				}
+
+				obj.timer("start");
+
+				var eleList = document.getElementById("hiddenEle");
+
+				canvas.addEventListener("tap", function() {
+					var currentAtt = eleList.style.display;
+					if(eleList.style.display == "none") {
+						eleList.style.display = "block";
+					} else {
+						eleList.style.display = "none";
+					}
+				})
+				setTimeout(function() {
+					if(eleList.style.display == "block") {
+						eleList.style.display = "none";
+					} else {
+						eleList.style.display = "none";
+					}
+				}, 3000);
+
+				var togglePlay = document.getElementById("togglePlay");
+				togglePlay.addEventListener("tap", function() {
+					if(this.src.indexOf("play") > 0) {
+						this.src = "image/pauseMusic.png"; //暂停或者静音	
+						audiEle.muted = true;
+						return;
+					}
+					this.src = "image/playMusic.png"; //播放或者消除静音
+					audiEle.muted = false;
+				});
+
+				//暂停计时
+				var pause = document.getElementById("pause");
+				pause.addEventListener("tap", function() {
+					if(pause.innerText == "暂停") {
+						pause.innerText = "继续";
+						obj.timer("pause");
+						togglePlay.src = "image/pauseMusic.png"; //暂停或者静音						
+						audiEle.pause();
+					} else {
+						pause.innerText = "暂停";
+						obj.timer("start");
+						togglePlay.src = "image/playMusic.png"; //播放或者消除静音
+						audiEle.play();
+					}
+				});
+
+				//计时完成
+				var done = document.getElementById("done");
+				done.addEventListener("tap", function(event) {
+					obj.timer("done");
+					event.detail.gesture.preventDefault(); //修复iOS 8.x平台存在的bug，使用plus.nativeUI.prompt会造成输入法闪一下又没了
+					var btnArray = ['确定', '取消'];
+					mui.prompt('记录一下每个回忆：', '阅读', '番茄', btnArray, function(e) {
+						if(e.index == 0) {
+							//e.value
+							mui.toast("保存成功！");
+							mui.plusReady(function() {
+								plus.webview.currentWebview().close();
+							})
+						} else {
+
+						}
+					})
+				});
+				
+						//获取原始窗口的高度
+			var originalHeight = document.documentElement.clientHeight || document.body.clientHeight;
+
+			window.onresize = function() {
+
+				//软键盘弹起与隐藏  都会引起窗口的高度发生变化
+				var resizeHeight = document.documentElement.clientHeight || document.body.clientHeight;
+
+				if(resizeHeight * 1 < originalHeight * 1) { //resizeHeight<originalHeight证明窗口被挤压了
+
+					plus.webview.currentWebview().setStyle({
+						height: originalHeight
+					});
+
+				}
+			}
+			})
+		</script>
+	</body>
+
+</html>
